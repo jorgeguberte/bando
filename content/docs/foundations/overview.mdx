@@ -1,0 +1,54 @@
+---
+title: What is SOMA?
+description: The motivation and computational model of an agent-oriented language.
+---
+
+SOMA is a development codename for a language and abstract machine designed around agent computation.
+
+Traditional programs primarily describe a sequence of transformations. SOMA programs describe:
+
+- an **intent** and its satisfaction conditions;
+- an authorized space of operations;
+- explicit resource limits;
+- information that may be uncertain and provenance-bearing;
+- requirements that must be discharged before effects alter the world.
+
+## Why a language?
+
+Current agent frameworks repeatedly rebuild the same defensive glue:
+
+```text
+model → parse → validate → tool → model → critic → retry → budget check
+```
+
+SOMA moves the stable parts of that glue into language and runtime semantics:
+
+| Framework concern | SOMA concept |
+|---|---|
+| Free-form objective | `intent` |
+| Tool permission | capability |
+| Token/tool limits | budget ledger |
+| Model output | `claim<T>` |
+| External verification | `attestation<P,S>` |
+| World mutation | `act[D]` + atomic gate |
+| Child agent | `delegate` + `ChildHandle` |
+| Search/retry loop | `converge` |
+
+## The central separation
+
+Permission and scheduling are different questions.
+
+```text
+Eligible(frame, world) -> Operation[]
+Choose(eligible, policy_state) -> Operation
+```
+
+The semantics determine eligibility. A policy chooses among eligible operations. A poor policy may waste budget; it must not bypass capabilities or gates.
+
+## What SOMA is not
+
+- It is not a prompt format.
+- It is not an LLM-specific DSL.
+- It does not treat confidence as authority.
+- It does not claim that verification makes arbitrary inference true.
+- It is not implemented yet; this site documents the current specification snapshot.

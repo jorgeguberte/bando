@@ -1,47 +1,72 @@
-# soma-docs
+# SOMA Documentation
 
-This is a Next.js application generated with
-[Create Fumadocs](https://github.com/fuma-nama/fumadocs).
+Fumadocs site for the public, versioned documentation of the SOMA agent-oriented language.
 
-It is a Next.js app with [Static Export](https://nextjs.org/docs/app/guides/static-exports) configured.
+## Documentation policy
 
-Run development server:
+Only material marked **FROZEN** or **RESOLVED FOR CURRENT PHASE** is published as normative. Active proposals remain in the development wiki until promoted.
 
-```bash
+Current source checkpoint: `a2c4403` from `C:/Users/Jorge/wiki`.
+
+## Requirements
+
+- Node.js 22 or newer
+- npm 10 or newer
+
+## Run locally
+
+### Windows Command Prompt
+
+```bat
+cd /d C:\Users\Jorge\soma-docs
+npm install
 npm run dev
-# or
-pnpm dev
-# or
-yarn dev
 ```
 
-Open http://localhost:3000 with your browser to see the result.
+### macOS / Linux
 
-## Explore
+```bash
+npm install
+npm run dev
+```
 
-In the project, you can see:
+Open <http://localhost:3000>. Documentation lives at `/docs`.
 
-- `lib/source.ts`: Code for content source adapter, [`loader()`](https://fumadocs.dev/docs/headless/source-api) provides the interface to access your content.
-- `lib/layout.shared.tsx`: Shared options for layouts, optional but preferred to keep.
+## Quality checks
 
-| Route                     | Description                                            |
-| ------------------------- | ------------------------------------------------------ |
-| `app/(home)`              | The route group for your landing page and other pages. |
-| `app/docs`                | The documentation layout and pages.                    |
-| `app/api/search/route.ts` | The Route Handler for search.                          |
+```bash
+npm run lint
+npm run types:check
+npm run build
+```
 
-### Fumadocs MDX
+The project uses Next.js static export. Production output is written to `out/`.
 
-Collections are defined with the [Macro API](https://fumadocs.dev/docs/mdx/macro) in `lib/source.ts`.
+```bash
+npm run start
+```
 
-Read the [Introduction](https://fumadocs.dev/docs/mdx) for further details.
+## Repository link
 
-## Learn More
+After creating the remote, set the public URL at build time:
 
-To learn more about Next.js and Fumadocs, take a look at the following
-resources:
+```bash
+NEXT_PUBLIC_REPOSITORY_URL=https://github.com/OWNER/REPO npm run build
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js
-  features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-- [Fumadocs](https://fumadocs.dev) - learn about Fumadocs
+Windows Command Prompt:
+
+```bat
+set NEXT_PUBLIC_REPOSITORY_URL=https://github.com/OWNER/REPO&& npm run build
+```
+
+## Content structure
+
+- `content/docs/foundations` — frozen ontology and resolved semantic foundations
+- `content/docs/runtime` — resolved SOMA-VM behavior
+- `content/docs/ir` — resolved SOMA-IR v0 items
+- `content/docs/reference` — glossary, stability matrix, and provenance
+
+## Naming
+
+SOMA is the development codename. “Bando Lang” is a future public branding direction only; naming does not change semantics or architecture.

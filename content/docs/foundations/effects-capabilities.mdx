@@ -1,0 +1,49 @@
+---
+title: Effects, capabilities, and gates
+description: The resolved safety boundary between uncertain computation and world mutation.
+---
+
+## Effects
+
+SOMA uses effect rows indexed by domain:
+
+```text
+Σ ⊆ { read[D], infer, act[D] }
+```
+
+Pure computation is the empty effect row.
+
+## Capabilities
+
+A capability is authority, not a prompt instruction. Inference cannot create a capability.
+
+```text
+allow read[workspace]
+allow act[sandbox]
+require TestsPassed for act[workspace]
+```
+
+## Static and dynamic checks
+
+The compiler can establish structural compatibility and preserve deferred checks. The runtime validates concrete identity, freshness, issuer, revocation, and state.
+
+```text
+SymbolicMatch = Proved | Refuted | Deferred(Check[])
+```
+
+`Deferred` is not acceptance. It means a runtime check remains mandatory.
+
+## Atomic gate
+
+Requirements are hard preconditions. A protected effect commits only after every required check is discharged at the physical effect boundary.
+
+```text
+AtomicEffectGate enforces Req(op, args)
+AtomicEffectGate does not invent Req(op, args)
+```
+
+CAS is one possible check, not the definition of the gate.
+
+## Property-specific flow
+
+There is no generic “tainted → clean” conversion. An attestation about `TestsPassed(diff)` does not discharge `SafeToDeploy(diff)` unless an explicit, decidable policy relation says so.

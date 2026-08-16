@@ -1,0 +1,29 @@
+---
+title: Glossary
+description: Core terms used across the SOMA specification.
+---
+
+| Term | Meaning |
+|---|---|
+| Agent | Identity and authority boundary |
+| Intent | Goal-directed unit of computation |
+| Operation | Unit of scheduling and execution |
+| Claim | Communicable epistemic assertion; not truth |
+| Evidence | Artifact or observation that may support a property |
+| Attestation | Authenticated certificate about a predicate and bound subject |
+| Belief | Agent-local internalization of a claim under policy |
+| Capability | Non-forgeable authority over an effect domain |
+| Requirement (`Req`) | Hard precondition declared by an operation |
+| Effect row (`Σ`) | Static may-summary of observable effects |
+| Machine effects (`μ`) | Internal runtime operations used during lowering |
+| IntentFrame | Runtime owner of one intent's lifecycle, authority, children, and budget |
+| ChildHandle | Typed handle for a delegated child computation |
+| ConvergeFrame | Runtime state for bounded search owned by an IntentFrame |
+| Satisfier | The only operation that may promote a partial candidate to a satisfied value |
+| BudgetScope | Local limit/accounting view without independent resource ownership |
+| Settlement | Reconciliation of reserved, spent, and released resources |
+| LineageGraph | Finite directed static dependency graph; cycles are allowed |
+| PathFactContext (`Ψ`) | Finite must-facts valid at a CFG point |
+| ProvenanceRef | Concrete runtime provenance for an execution/value |
+| FROZEN | Minimal ontology requiring explicit reconsideration to change |
+| RESOLVED FOR CURRENT PHASE | Precise enough to advance, reopenable under counterexample |

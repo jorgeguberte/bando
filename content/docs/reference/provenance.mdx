@@ -1,0 +1,50 @@
+---
+title: Source and provenance
+description: How this public documentation is derived from the canonical development wiki.
+---
+
+## Canonical source
+
+This site is a curated publication of the private OKF development wiki at checkpoint:
+
+```text
+a2c4403
+```
+
+The public docs are not the source of truth for active research. They contain only promoted material.
+
+## Included canonical documents
+
+```text
+architecture/soma-kernel-v0.md
+architecture/soma-type-effect-gates.md
+architecture/soma-intentframe-runtime.md
+architecture/soma-convergeframe-v0-operational-semantics.md
+architecture/soma-ir-v0.md
+tasks/soma-development-diary.md
+```
+
+## Publication pipeline
+
+```text
+Gemini / ChatGPT dialogue
+    ↓ critical comparison
+raw source records
+    ↓ Hermes consolidation
+canonical OKF architecture pages
+    ↓ stability filter
+this Fumadocs site
+```
+
+## Editorial rules
+
+1. Dialogue is provenance, not specification.
+2. Vendor/model agreement is not formal validation.
+3. Counterexamples override rhetorical consensus.
+4. Candidate material stays out of normative pages.
+5. Every public snapshot identifies its source checkpoint.
+6. Resolved material may reopen under implementation pressure.
+
+## Machine-readable access
+
+Fumadocs exposes `llms.txt`, full-text LLM output, per-page Markdown, and local search so models can consume the same curated snapshot as human readers.

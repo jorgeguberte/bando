@@ -1,0 +1,92 @@
+---
+title: Semantic Ops — Phase A
+description: Resolved SOMA-IR semantics for the pure core, read, and infer.
+---
+
+<Callout type="info" title="Phase A — RESOLVED FOR CURRENT PHASE">
+The pure core, `soma.read`, and `soma.infer` are resolved. Later Semantic Ops phases remain outside this normative snapshot.
+</Callout>
+
+## Pure core
+
+There is no generic `soma.pure` opcode. Ordinary deterministic computation uses normal SSA operations:
+
+```text
+int.add
+bool.and
+struct.make
+struct.get
+```
+
+Epistemically meaningful pure operations may use the SOMA namespace:
+
+```text
+%payload = soma.claim.payload %claim
+```
+
+Pure operations preserve lineage and cannot promote `Claimed(P)` to P, `Observed(P)`, or `Attested(P)`.
+
+## `soma.read`
+
+```text
+%result = soma.read @workspace.snapshot(%workspace)
+```
+
+A read declaration has a non-empty effect row contained in `read[D]`, and the capability context must satisfy it.
+
+```text
+Σ_decl ≠ ∅
+Σ_decl ⊆ {read[D]}
+C ⊨ Σ_decl
+```
+
+### Trusted observation binding
+
+Only an authenticated descriptor, trusted observation contract, trusted implementation binding, and runtime effect confinement may materialize `Observed` facts.
+
+```text
+read_decl @workspace.snapshot(%ws)
+  -> Result<Snapshot, ReadError>
+
+  on_ok(%snap) observes {
+    SnapshotOf(%snap, %ws)
+  }
+```
+
+Postconditions become available only on the refined success path. Historical observation does not prove currentness.
+
+## `soma.infer`
+
+```text
+%result = soma.infer @Spec(%arg1, %arg2, ...)
+```
+
+The semantic identity is an `InferenceSpecRef`; implementation is optional and backend-neutral.
+
+```text
+Σ = {infer}
+allow infer ∈ C
+```
+
+### Explicit semantic inputs
+
+Mutable evidence, retrieved memory, workspace contents, prior claims, and tool observations must enter as explicit SSA operands. A Model Broker may route, serialize, cache, or choose decoding parameters, but it cannot silently retrieve semantic evidence while the IR declares only `{infer}`.
+
+### InferSuccess
+
+Provider completion is not semantic success.
+
+```text
+backend completed
+→ decode raw output
+→ validate output contract
+→ construct Claim<T>
+→ attach runtime provenance
+→ Ok(Claim<T>)
+```
+
+Only the success path may introduce `Claimed(...)`. Inference never produces `Observed`, `Attested`, or bare truth.
+
+## Provenance
+
+Static lineage includes the inference origin and input dependencies. Concrete model identity, prompt/context digest, evidence references, usage, cache, and broker policy belong to runtime provenance rather than the static layout of `Claim<T>`.

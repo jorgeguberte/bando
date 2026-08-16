@@ -1,0 +1,59 @@
+---
+title: IntentFrame lifecycle
+description: The universal runtime frame for goal-directed computation.
+---
+
+<Callout type="info" title="RESOLVED FOR CURRENT PHASE">
+The IntentFrame lifecycle is stable enough for IR work. It may reopen under an implementation counterexample.
+</Callout>
+
+An `IntentFrame` owns the runtime state of one intent.
+
+```text
+IntentFrame
+├── identity and parent
+├── agent / intent
+├── lifecycle state
+├── authority / capabilities
+├── budget account
+├── children / handles
+├── in-flight commitments
+├── generation token
+├── result
+└── ConvergeFrame?     optional search state
+```
+
+## Lifecycle
+
+```text
+Pending → Ready → Running ↔ Waiting(reason)
+                     │
+                     ├─ Completed(value)
+                     ├─ Failed(error)
+                     └─ Cancelling → Cancelled(reason)
+```
+
+`Waiting` may represent a model request, tool I/O, child intent, verifier, budget grant, or timer.
+
+## Cancelling
+
+A frame entering `Cancelling`:
+
+1. invalidates its generation token;
+2. propagates cancellation to children;
+3. requests cancellation of pending I/O where possible;
+4. drains outstanding commitments;
+5. reconciles reserved resources;
+6. waits for active children to reach zero;
+7. settles exactly once;
+8. becomes `Cancelled`.
+
+## Terminal barrier
+
+```text
+Terminalize(frame, outcome) iff
+  ActiveChildren(frame) = ∅
+  and OutstandingCommitments(frame) = 0
+```
+
+The barrier applies to completion, failure, and cancellation. Terminal audit records may remain after a child is no longer active.

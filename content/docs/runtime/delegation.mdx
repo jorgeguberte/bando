@@ -1,0 +1,61 @@
+---
+title: Delegation and await
+description: Structured child computation, typed handles, authority envelopes, and late-result safety.
+---
+
+<Callout type="info" title="RESOLVED FOR CURRENT PHASE">
+`delegate` and `await` have a resolved semantic baseline. General handle linearity remains open.
+</Callout>
+
+## Child handle
+
+```text
+ChildHandle<T, E, Σ> {
+  child_id
+  parent_id
+  generation_token
+  settled
+}
+```
+
+- `T` is success;
+- `E` is child failure or cancellation;
+- `Σ` is the transitive may-effect summary of the subtree.
+
+## Effects belong to delegate
+
+A child may execute before the parent reaches `await`, or even if no await occurs. Therefore the child effect row is attributed at delegation time.
+
+```text
+delegate Worker(...) : ChildHandle<T,E,Σ_child> ! Σ_child
+await(handle)        : Result<T,E>               ! ∅
+```
+
+`await` synchronizes; it does not materialize effects retroactively.
+
+## Authority envelope
+
+SOMA distinguishes:
+
+```text
+caller authority
+target agent native authority
+explicit caller grant
+exported target intent
+effect envelope for this invocation
+```
+
+A reference to an agent does not authorize arbitrary use of its native capabilities. `AllowInvoke` mediates the target intent and effect envelope to prevent confused-deputy behavior.
+
+## Late results
+
+Responses carry a non-forgeable generation token and request identity.
+
+```text
+AcceptResponse(req) iff
+  req.generation == frame.current_generation
+  and req.request_id is outstanding
+  and frame.state in {Running, Waiting}
+```
+
+Invalidation prevents zombie continuations. It does not undo external effects already committed.

@@ -1,0 +1,39 @@
+---
+title: Stability model
+description: How to read FROZEN and RESOLVED FOR CURRENT PHASE.
+---
+
+SOMA uses explicit stability labels.
+
+## FROZEN
+
+The concept is part of the current minimal ontology. It does not mean immutable forever, but changes require an explicit architectural decision and a counterexample or implementation need.
+
+## RESOLVED FOR CURRENT PHASE
+
+The rule is precise enough for the next implementation or IR step.
+
+It may reopen when:
+
+- implementation exposes an ambiguity;
+- a negative test fails;
+- a counterexample breaks an invariant;
+- a later lowering cannot preserve the rule.
+
+<Callout type="warn" title="Not a proof">
+Resolved-for-current-phase does **not** mean formally sound, complete, or production-safe.
+</Callout>
+
+## Candidate and open work
+
+Candidate and open material remains in the development wiki and is intentionally not published as normative documentation here.
+
+## Source discipline
+
+Each release of this site points to a wiki checkpoint. This snapshot uses:
+
+```text
+a2c4403
+```
+
+The [provenance page](/docs/reference/provenance) describes the publication boundary.

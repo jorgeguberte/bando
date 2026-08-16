@@ -1,13 +1,49 @@
 ---
-title: Hello World
-description: Your first document
+title: SOMA documentation
+description: A specification for agent-oriented computation with explicit uncertainty, authority, budgets, and effects.
 ---
 
-Welcome to the docs! You can start writing documents in `/content/docs`.
+<Callout type="info" title="Specification snapshot">
+This site publishes only material marked **FROZEN** or **RESOLVED FOR CURRENT PHASE** at source checkpoint `a2c4403`. Resolved material may reopen under a counterexample and is not a proof of soundness.
+</Callout>
 
-## What is Next?
+SOMA is not “Python with agents.” It is an attempt to define an abstract machine in which agents, intentions, epistemic values, authority, resources, and effects are native concepts.
+
+## Start here
 
 <Cards>
-  <Card title="Learn more about Next.js" href="https://nextjs.org/docs" />
-  <Card title="Learn more about Fumadocs" href="https://fumadocs.dev" />
+  <Card title="What is SOMA?" description="The problem, the model, and the core separation." href="/docs/foundations/overview" />
+  <Card title="Kernel v0" description="The frozen ontology of the language." href="/docs/foundations/kernel" />
+  <Card title="SOMA-VM" description="Intent frames, structured concurrency, and convergence." href="/docs/runtime/intent-frame" />
+  <Card title="SOMA-IR v0" description="The two-level typed SSA representation." href="/docs/ir/overview" />
 </Cards>
+
+## One sentence
+
+> A SOMA program describes an intention, an authorized space of operations, resource limits, epistemic laws, and the conditions required before effects may change the world.
+
+The runtime searches for a valid trajectory inside those boundaries.
+
+## Two questions, two layers
+
+```text
+Language semantics
+    “May this operation happen?”
+    types · lineage · capabilities · requirements · gates
+
+SOMA-VM
+    “Which eligible operation should happen now?”
+    frames · scheduling · budgets · delegation · convergence
+```
+
+## Current normative surface
+
+- Kernel v0 ontology
+- Bound attestations and property-specific epistemic flow
+- IntentFrame lifecycle and structured `delegate` / `await`
+- Budget ownership, settlement, and cancellation
+- Sequential ConvergeFrame v0
+- SOMA-IR structural contract and lineage/path facts
+- SOMA-IR Semantic Ops Phase A: pure core, `read`, and `infer`
+
+See the [stability matrix](/docs/reference/status) for exact status.

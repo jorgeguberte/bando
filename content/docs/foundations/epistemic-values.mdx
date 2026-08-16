@@ -1,0 +1,58 @@
+---
+title: Epistemic values
+description: Claims, evidence, attestations, and beliefs without truth laundering.
+---
+
+SOMA keeps epistemic states explicit.
+
+```text
+observation
+    ↓
+claim
+    ↓ evidence / verification
+belief candidate
+    ↓ policy
+belief
+    ↓ authority + gate
+world effect
+```
+
+## Claim
+
+A `claim<T>` is an assertion, not a fact. It retains provenance and may remain uncertain.
+
+```text
+Claimed(P)
+```
+
+means “a claim asserts P.” It does not mean P.
+
+## Attestation
+
+An attestation is bound to a predicate, subject, issuer, environment, and validity conditions.
+
+```text
+attestation<TestSuitePassed> {
+  subject: DiffHash
+  base: RepositoryStateHash
+  verifier: TestRunnerIdentity
+  suite: TestSuiteHash
+  environment: EnvironmentHash
+}
+```
+
+It discharges only the property it actually verifies. Tests passing for a patch do not prove that a proposed root-cause explanation is correct.
+
+## Belief
+
+A belief is an agent-local internalization under policy. It does not become global truth and does not lose provenance.
+
+Constructing a belief value and persisting it are separate:
+
+```text
+claim --internalize--> belief value --act[memory]--> memory substrate
+```
+
+## Confidence
+
+Confidence may guide ranking, search, or escalation. It does not grant authority and does not replace an attestation.

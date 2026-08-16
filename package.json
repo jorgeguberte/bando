@@ -1,13 +1,14 @@
 {
   "name": "soma-docs",
-  "version": "0.0.15",
+  "version": "0.1.0",
   "private": true,
   "scripts": {
     "build": "next build",
     "dev": "next dev",
     "start": "serve out",
     "types:check": "next typegen && tsc --noEmit",
-    "lint": "eslint"
+    "lint": "eslint",
+    "check": "npm run lint && npm run types:check && npm run build"
   },
   "dependencies": {
     "cnfast": "^0.1.0",
@@ -31,5 +32,6 @@
     "typescript": "^6.0.3",
     "eslint": "^9.39.4",
     "eslint-config-next": "16.3.0"
-  }
+  },
+  "description": "Versioned documentation for the SOMA agent-oriented language."
 }

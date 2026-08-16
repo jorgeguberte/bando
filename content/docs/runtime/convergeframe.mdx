@@ -1,0 +1,84 @@
+---
+title: ConvergeFrame v0
+description: Sequential search, pure policy, durable dispatch, satisfaction, and conservative settlement.
+---
+
+<Callout type="info" title="RESOLVED FOR CURRENT PHASE">
+ConvergeFrame v0 is sequential and permits at most one asynchronous request in flight. Parallel search is a future extension.
+</Callout>
+
+An IntentFrame may own a ConvergeFrame. The intent is not itself the search.
+
+## State
+
+```text
+SearchStatus =
+  Exploring
+  | Suspended(WaitReason)
+  | Waiting(InFlightHandle)
+  | Closing(PendingOutcome, InFlightHandle?)
+  | Satisfied(T)
+  | Exhausted(ExhaustionReport<P>)
+  | Failed(ConvergeError)
+```
+
+`Closing` drains transport and accounting after the logical outcome is known.
+
+## State, partial, satisfied
+
+```text
+S = search state
+P = partial candidate
+T = satisfied value
+```
+
+The frontier stores `SearchNode<S>`. `PartialOf(node)` may produce `P`. Only `Satisfier<P,T>` may produce `T`.
+
+```text
+ConvergenceOutcome<T,P> =
+  Satisfied(T)
+  | Exhausted(ExhaustionReport<P>)
+```
+
+A partial candidate never converts implicitly to a satisfied result.
+
+## Runnable actions
+
+```text
+RunnableAction<P> =
+  Expand(node, operation)
+  | CheckSatisfaction(node, partial)
+```
+
+The runtime computes eligible actions. A pure SearchPolicy chooses only from that set.
+
+```text
+Σ_strategy = ∅
+Σ_converge = Σ_space ∪ Σ_satisfier
+```
+
+Effectful scoring must be an explicit operation in the search space.
+
+## Durable dispatch
+
+External work uses two phases:
+
+```text
+StageLocal
+  reserve ceiling
+  create stable request id
+  persist commitment and outbox intent
+
+EmitExternal
+  Dispatched | DeliveryUnknown
+```
+
+Transport retries reuse the same request identity and do not become new semantic search steps. Blind retry is forbidden when the adapter cannot guarantee idempotency or deduplication.
+
+## Dynamic effects
+
+Static eligibility is not the physical effect gate. A protected mutation checks its concrete requirements at the destination boundary immediately before commit.
+
+## Settlement
+
+Semantic completion and accounting settlement are separate concepts. `SettlementUnknown` retains the commitment. During `Closing`, late semantic payload cannot advance the search, but valid accounting information may still settle the handle.

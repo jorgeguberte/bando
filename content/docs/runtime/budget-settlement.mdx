@@ -1,0 +1,58 @@
+---
+title: Budget ownership and settlement
+description: Resource transfer, local commitments, conservation, and exactly-once settlement.
+---
+
+<Callout type="info" title="RESOLVED FOR CURRENT PHASE">
+The ledger model is resolved for sequential delegation and settlement. It is not a general linear type system.
+</Callout>
+
+## Account
+
+```text
+BudgetAccount<R> {
+  available
+  reserved
+  spent
+}
+```
+
+Delegation transfers ownership; it does not create a shadow reservation.
+
+```text
+spawn_and_grant(parent, child, grant):
+  atomically:
+    create child
+    parent.available -= grant
+    child.available += grant
+```
+
+`reserved` means resource owned by the frame but committed to a local operation in flight.
+
+## Conservation
+
+For each conserved resource `r`:
+
+```text
+initial[r] = Σ available[r] + Σ reserved[r] + Σ spent[r]
+```
+
+Typical candidates include money, token allowance, and tool-call allowance. Wall-clock time under parallelism is not assumed to obey the same algebra.
+
+## Settlement
+
+A child may settle only after descendants terminate and commitments reconcile.
+
+```text
+require ActiveChildren(child) = ∅
+require OutstandingCommitments(child) = 0
+require CAS(handle.settled, false → true)
+```
+
+The CAS prevents double settlement; it does not replace the preconditions. Unspent balance returns to the parent. Historical spend remains attributed to the frame that incurred it.
+
+## Ambiguous delivery
+
+When delivery or accounting is unknown, the runtime retains the commitment rather than inventing a refund or zero cost.
+
+> Settlement safety is not a liveness guarantee. A permanently unknown settlement may keep a frame non-terminal indefinitely.

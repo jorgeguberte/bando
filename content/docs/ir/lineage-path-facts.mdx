@@ -1,0 +1,94 @@
+---
+title: Lineage and path facts
+description: Finite cyclic dependency graphs, must-facts, external currentness, and delegated provenance.
+---
+
+<Callout type="info" title="Item 1 — RESOLVED FOR CURRENT PHASE">
+Item 1 survived adversarial tests for loops, external mutation, delegation, Result refinement, and finite fact analysis.
+</Callout>
+
+## Orthogonal axes
+
+```text
+Γ(%v) = <τ, LineageId>
+Ψ      = PathFactContext
+Req    = operation requirements
+C      = available authority
+Σ      = observable effects
+```
+
+## Finite cyclic lineage graph
+
+Lineage is not always a DAG. Loop-carried SSA values create legitimate cycles.
+
+```text
+LineageGraph {
+  nodes: finite set
+  edges: finite set
+}
+
+edge: value → dependency
+```
+
+Construction occurs in two phases: allocate a `LineageId` for every SSA definition, block argument, and origin site; then populate edges.
+
+`Origin`, `Derived`, and `Join` remain node kinds. SCC condensation is a derived optimization for queries and compression, not the primary semantics.
+
+## Queries
+
+```text
+MayDependOnInference(value)
+MayDependOnObservation(value)
+ReachableOrigins(value)
+```
+
+Queries terminate with visited-set graph traversal. When an opaque delegated origin is involved, answers are three-valued:
+
+```text
+Yes | No | Unknown
+```
+
+`No` requires positive proof of absence.
+
+## Path facts
+
+`Ψ` is a finite must-fact context at a CFG point.
+
+```text
+Claimed(P)
+ObservedAt(key, value, version)
+Attested(P(subject(cert)), cert)
+IsOk(result) / IsErr(result)
+SameValue(a,b)
+ProjectionOf(field, aggregate, key)
+```
+
+`Claimed(P)` records an assertion; it does not assert P as truth.
+
+## Merge and fixed point
+
+```text
+Ψ_merge = intersection(rename(Ψ_incoming))
+```
+
+Incoming symbols are renamed to block arguments before intersection. A finite `FactUniverse(module)` and monotone transfer functions ensure the v0 analysis terminates.
+
+## Historical facts and currentness
+
+Historical observation is not currentness.
+
+```text
+ObservedAt(workspace.state, H, version=v1)   historical
+CurrentStateIs(workspace, H)                 current
+```
+
+An isolation witness may sustain currentness only when its scope and semantics truly exclude relevant interference. A CAS/version guard does not prove currentness; it defers a comparison to the commit gate.
+
+## Delegated results
+
+`ChildHandle<T,E,Σ>` describes possible effects, not result dependency. A delegated result receives an opaque `DelegatedResult(intent)` origin plus concrete runtime provenance.
+
+```text
+opaque ⇒ Unknown
+opaque ≠ clean
+```

@@ -1,0 +1,79 @@
+---
+title: SOMA-IR v0 overview
+description: The two-level typed SSA representation and its lowering preservation contract.
+---
+
+<Callout type="info" title="Item 0 — RESOLVED FOR CURRENT PHASE">
+The structural contract is resolved. Final opcode spelling and surface syntax are not.
+</Callout>
+
+## Two dialects
+
+```text
+Frontend AST
+    ↓
+soma.*
+    typed SSA
+    structured regions
+    semantic operations remain recognizable
+    ↓ lowering
+soma.vm.*
+    typed SSA
+    flat CFG
+    block arguments
+    explicit VM intrinsics
+    ↓
+SOMA-VM / backend
+```
+
+The semantic dialect may represent `read`, `infer`, `verify`, `act`, `delegate`, `await`, `converge`, and `internalize` directly. The lowered dialect exposes lifecycle, accounting, staging, dispatch, wakeup, settlement, and closing.
+
+## SSA and CFG
+
+Every value is typed SSA:
+
+```text
+%value : Type
+```
+
+The lowered dialect uses block arguments rather than special epistemic registers or `phi` instructions.
+
+## Observable and machine effects
+
+```text
+Σ = semantic observable effects
+μ = internal VM effects
+```
+
+An administrative intrinsic may have `Σ = ∅` and non-empty `μ`. An intrinsic implementing a semantic operation must preserve its original `Σ`.
+
+```text
+soma.vm.stage_local
+  Σ = ∅
+  μ = {ledger_stage, outbox_write}
+
+soma.vm.invoke_gated_effect
+  Σ = {act[workspace]}
+  μ = {adapter_io, settlement_tracking}
+```
+
+Machine effects are trusted runtime behavior, not a channel for hiding semantic effects.
+
+## Lowering preservation
+
+Lowering must preserve:
+
+1. types;
+2. observable effects;
+3. authority and effect envelopes;
+4. epistemic lineage and explicit promotion;
+5. physical gate boundaries;
+6. budget ownership and commitments;
+7. structured concurrency;
+8. settlement safety.
+
+These are design obligations, not yet proven theorems.
+
+## Adapter guarantees
+
+Programs declare required guarantees. A trusted registry binds concrete adapters and authenticates what they provide. Code cannot self-assert that its adapter implements atomic gating or idempotency.

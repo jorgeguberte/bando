@@ -1,0 +1,38 @@
+---
+title: Kernel v0
+description: The frozen ontology of SOMA.
+---
+
+<Callout type="info" title="FROZEN">
+Kernel v0 is the minimal ontology. Runtime and IR types such as `ChildHandle` and `ConvergenceOutcome` do not add new kernel entities.
+</Callout>
+
+## Ontology
+
+| Element | Role |
+|---|---|
+| `agent` | Identity and authority boundary: policies, capabilities, memory, and budget |
+| `intent` | Goal-directed unit of computation |
+| `operation` | Unit of execution and scheduling |
+| `claim<T>` | Communicable epistemic assertion with provenance |
+| `evidence` | Observation or artifact that may support or refute a property |
+| `attestation<P>` | Authenticated certificate about a predicate and bound subject |
+| `belief<T>` | Agent-local internalization of a claim under policy |
+| `contract` | Typed input/output boundary and obligations |
+| capability | Non-forgeable authority over an effect domain |
+| budget | Transactional ledger of delegated resources |
+
+## Short form
+
+> The agent is the unit of authority. The intent is the unit of computation. The operation is the unit of scheduling. The claim is the unit of communicable knowledge.
+
+## Computational classes
+
+```text
+fn       deterministic, referentially transparent computation
+read[D]  observation of external domain D
+infer    epistemic, non-deterministic inference
+act[D]   mutation of external domain D
+```
+
+The classes do not imply equal risk. `act[sandbox]` and `act[production]` remain different authority domains.

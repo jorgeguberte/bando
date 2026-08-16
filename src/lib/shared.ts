@@ -3,4 +3,4 @@ export const docsRoute = '/docs';
 export const docsImageRoute = '/og/docs';
 export const docsContentRoute = '/llms.mdx/docs';
 export const repositoryUrl = process.env.NEXT_PUBLIC_REPOSITORY_URL;
-export const sourceCheckpoint = '0d89cd7';
+export const sourceCheckpoint = '5c7db6c';

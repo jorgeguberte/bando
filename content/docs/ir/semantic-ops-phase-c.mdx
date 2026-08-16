@@ -1,0 +1,240 @@
+---
+title: Semantic Ops — Phase C
+description: Resolved SOMA-IR semantics for delegate, await, and controlled claim-to-belief internalization.
+---
+
+<Callout type="info" title="Phase C — RESOLVED FOR CURRENT PHASE">
+`soma.delegate`, `soma.await`, and `soma.internalize` are resolved for the current IR/lowering phase. This page does not define `soma.converge` lowering or the complete CFG/error model.
+</Callout>
+
+## `soma.delegate`
+
+Delegation creates a structured child computation under an authenticated invocation contract, a bounded effect envelope, explicit authority rules, and an atomic budget grant.
+
+```text
+%handle = soma.delegate @TargetIntent(%args...),
+  grant: ...,
+  requested_effects: Σ_requested
+
+%handle : ChildHandle<T, E, Σ_child>
+```
+
+### Authenticated invocation contract
+
+The target is described by an authenticated `IntentInvocationDescriptor` that binds the target intent, signature, fixed child may-effect summary, exported effect envelope, authority policy, and implementation identity.
+
+SOMA-IR v0 uses fixed-effect intents:
+
+```text
+Σ_child ⊆ Σ_requested ⊆ Σ_exported ⊆ Σ_declared_envelope
+```
+
+The caller may choose an invocation ceiling narrower than the exported envelope, but it cannot narrow below the target intent's fixed `Σ_child`. Effect polymorphism is not part of v0.
+
+### Delegable authority
+
+Possessing a capability does not imply permission to delegate it.
+
+```text
+GrantAllowed(C_parent, target, C_grant)
+GrantEnvelopeCompatible(C_grant, Σ_requested)
+```
+
+Native target authority and authority granted by the parent remain separate sources:
+
+```text
+C_native_effective =
+  Attenuate(
+    C_target_native,
+    authority_policy,
+    Σ_requested
+  )
+
+C_granted_effective =
+  AuthorizedGrant(C_parent, target, C_grant)
+  restricted by authority_policy and Σ_requested
+
+C_child_effective =
+  C_native_effective ∪ C_granted_effective
+```
+
+No native or delegated authority made available to the child execution may exceed the invocation ceiling.
+
+The runtime does not require:
+
+```text
+C_child_effective ⊨ Σ_requested
+```
+
+because trusted gate, verifier, and runtime effects may be exercised by their own authenticated authority sources. Effect attribution and authority attribution remain distinct.
+
+### Per-execution confinement
+
+The invocation ceiling is enforced over the whole concrete child execution closure:
+
+```text
+ObsEffects(child_execution) ⊆ Σ_requested
+```
+
+The authenticated `Σ_child` is transitive: nested delegation, verifier effects, and gate effects that may occur through the child remain represented in the may-effect summary.
+
+### Budget ownership
+
+A budget grant transfers ownership from parent to child atomically. A failed grant or dispatch must not create a child frame, duplicate balance, or leave a zombie child.
+
+### Lineage
+
+The handle lineage depends on the delegate arguments and a `ChildInvocation` origin. The effect summary carried by `ChildHandle<T,E,Σ_child>` is a may-effect contract; it is not output data provenance.
+
+## `soma.await`
+
+`await` synchronizes with a structured child and exposes its settled result.
+
+```text
+%result = soma.await %handle
+
+ChildHandle<T,E,Σ_child>
+  → Result<T,E>
+```
+
+### Effect and authority
+
+```text
+Σ_await = ∅
+```
+
+`await` does not re-attribute the child's effects and does not require the waiting frame to possess the capabilities the child exercised. Suspension and scheduler bookkeeping are administrative runtime behavior rather than a second occurrence of `Σ_child`.
+
+### Neutral lineage through merges
+
+A handle may reach an `await` through a CFG merge where multiple target intents are possible. Static lineage therefore uses a neutral await origin:
+
+```text
+L_result → Origin(await_site, AwaitResult)
+L_result → L_handle
+```
+
+The concrete child identity remains reachable through the handle lineage and runtime provenance. The `await` node does not invent a single static `TargetIntent` when control flow cannot establish one.
+
+### Settlement barrier
+
+A semantic child result is exposed only after valid settlement. If settlement remains unknown, `await` remains suspended.
+
+```text
+SettlementUnknown
+  → no Result<T,E> exposed yet
+```
+
+The VM validates the handle generation token and parent identity when resuming the waiter. Phase C does not introduce universal affine or linear handle semantics.
+
+## `soma.internalize`
+
+`internalize` performs controlled claim → belief internalization. It does not promote a claim to truth.
+
+```text
+%result = soma.internalize @Policy, %claim,
+  evidence: [%evidence...]
+
+%result : Result<Belief<T>, InternalizationError>
+```
+
+### Internalization requirements
+
+A policy declares requirements over the claim:
+
+```text
+InternalizationReq(policy, claim)
+```
+
+Evidence is checked with predicate coverage and subject binding:
+
+```text
+Uncovered | Refuted
+  → inadmissible
+
+Covered + Proved
+  → statically discharged
+
+Covered + Deferred(Check[])
+  → mandatory runtime validation
+```
+
+Dynamic validation failure produces:
+
+```text
+Err(InternalizationError)
+no Belief
+no Internalized fact
+```
+
+An attestation discharges only the predicate and subject relation supported by the policy. Evidence for one property cannot silently justify a different property.
+
+### Validation effects and authority
+
+```text
+Σ_internalize = Σ_validation
+C_caller ⊨ Σ_validation
+```
+
+If validation performs an external read, that read remains visible in the effect summary and must be authorized for the caller. `internalize` does not borrow privileged runtime authority as an oracle for application code.
+
+### Success-conditional facts
+
+`Internalized(...)` is introduced only on the successful `Result` path. The exact propagation of latent `on_ok` facts through CFG merges remains an Item 3 obligation.
+
+### Opaque validation lineage
+
+A belief result depends on the claim, supplied evidence, and the policy validation result. If policy internals are opaque, static lineage preserves that uncertainty rather than converting absence of an explicit edge into `No`:
+
+```text
+L_belief → L_claim
+L_belief → L_evidence...
+L_belief → Origin(
+  internalize_site,
+  InternalizationResult(
+    policy = @P,
+    internal = Unknown
+  )
+)
+```
+
+A trusted result-lineage contract may refine this. Effect history is not a substitute for data provenance.
+
+## Intrinsic belief ownership
+
+Belief ownership is semantic content of the belief value, not merely a path fact in `Ψ`.
+
+```text
+OwnerBinding(%belief, CurrentAgent) =
+    Proved
+  | Deferred(CheckOwner)
+  | Refuted
+```
+
+Having a `Belief<T>` never implies that the current agent holds that belief. A belief created by Agent A remains a belief of A when passed to Agent B. A consumer that requires a local belief must establish the owner relation according to its own admissibility rules.
+
+```text
+Belief<T>
+≠
+BeliefHeldBy(CurrentAgent,T)
+```
+
+## Result and CFG obligations deferred to Item 3
+
+Phase C adds one new cross-item obligation while preserving the existing ones:
+
+```text
+RESULT-LATENT-POSTCOND
+ACT-SETTLEMENT-OUTCOME
+ACT-PARTIAL-COMPLETION
+HANDLE-EFFECT-JOIN
+```
+
+`HANDLE-EFFECT-JOIN` will define compatible block-argument joins for handles, including union of effect summaries where appropriate:
+
+```text
+ChildHandle<T,E,Σ1>
+ChildHandle<T,E,Σ2>
+
+→ compatible handle join with Σ1 ∪ Σ2
+```

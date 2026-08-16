@@ -6,7 +6,7 @@ Fumadocs site for the public, versioned documentation of the SOMA agent-oriented
 
 Only material marked **FROZEN** or **RESOLVED FOR CURRENT PHASE** is published as normative. Active proposals remain in the development wiki until promoted.
 
-Current source checkpoint: `0d89cd7` from `C:/Users/Jorge/wiki`.
+Current source checkpoint: `5c7db6c` from `C:/Users/Jorge/wiki`.
 
 ## Requirements
 

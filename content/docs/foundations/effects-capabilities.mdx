@@ -44,6 +44,23 @@ AtomicEffectGate does not invent Req(op, args)
 
 CAS is one possible check, not the definition of the gate.
 
+### Gate effects and authority
+
+Gate checks may perform observable enforcement effects before the target mutation decision.
+
+```text
+Σ_act = {act[D]} ∪ Σ_gate
+```
+
+The caller authorizes the target mutation. Trusted runtime authority covers effects of authenticated gate checks. Every effect remains attributed even when authority comes from a different source.
+
+If the gate rejects, the target mutation does not begin. Enforcement effects already performed remain observable and are not rolled back.
+
+```text
+gate rejection ≠ zero observable effects
+gate rejection = zero target mutation
+```
+
 ## Property-specific flow
 
 There is no generic “tainted → clean” conversion. An attestation about `TestsPassed(diff)` does not discharge `SafeToDeploy(diff)` unless an explicit, decidable policy relation says so.

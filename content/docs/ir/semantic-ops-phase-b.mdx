@@ -1,0 +1,140 @@
+---
+title: Semantic Ops — Phase B
+description: Resolved SOMA-IR semantics for verify, act, gate effects, authority attribution, and mutation footprints.
+---
+
+<Callout type="info" title="Phase B — RESOLVED FOR CURRENT PHASE">
+`soma.verify` and `soma.act` are resolved for IR/lowering work. This does not claim distributed atomicity or formal soundness.
+</Callout>
+
+## `soma.verify`
+
+```text
+%result = soma.verify @Verifier(%subject)
+  : Result<Attestation<P,S>, VerifyError>
+```
+
+`verify` is not a fifth effect. It inherits the verifier effect row:
+
+```text
+Σ_verify = Σ_verifier
+```
+
+A verifier descriptor authenticates identity, build, effect upper bound, output shape, and environment requirements. A separate TrustPolicy decides whether that verifier is acceptable for a specific requirement.
+
+```text
+AuthenticatedVerifierDescriptor ≠ PolicyTrustedVerifier
+```
+
+### Effect confinement
+
+The declared verifier effect row is an authenticated, physically enforced upper bound. An attempted physical effect outside the row must fail before it occurs.
+
+### Lineage
+
+The resulting certificate depends on its subject and an opaque verifier-result origin. Lineage queries are three-valued:
+
+```text
+Yes      explicit dependency reaches an inference origin
+Unknown  opaque internals may contain an unknown dependency
+No       absence is positively established
+```
+
+Trust in an attestation and causal lineage remain separate dimensions.
+
+## `soma.act`
+
+An act declaration includes its signature, target effect, hard requirements, adapter guarantees, and trusted mutation footprint.
+
+```text
+%result = soma.act @workspace.apply(...),
+  evidence: [...],
+  guards: [...]
+```
+
+## Requirements
+
+Static analysis classifies each requirement as:
+
+```text
+Proved
+Deferred(Check[])
+Uncovered
+Refuted
+```
+
+`Uncovered` and `Refuted` reject the invocation. Deferred checks remain mandatory at commit.
+
+## Effect attribution and authority attribution
+
+Gate checks may perform observable effects, such as reading a trust store.
+
+```text
+DeferredChecks = DynamicChecks(Req(op,args), Ψ)
+Σ_gate = union EffectsOf(check)
+Σ_act = {act[D]} union Σ_gate
+```
+
+Typing premises include:
+
+```text
+CallerAllows(C_caller, act[D])
+
+for each check:
+  TrustedGateCheckDescriptor(check)
+  RuntimeAuthorityCovers(
+    AuthoritySource(check),
+    EffectsOf(check)
+  )
+
+Σ_act subset Σ_declared_envelope
+```
+
+The declared envelope is authenticated and bound to the implementation. The caller need not own trusted runtime authority used by gate checks.
+
+> Effect attribution is not authority attribution.
+
+## Atomic gate guarantee
+
+If the gate rejects, the target-domain mutation `act[D]` must not begin.
+
+Gate-enforcement effects in `Σ_gate` may already have occurred. They remain observable, auditable, and accountable; rejection does not roll them back.
+
+```text
+gate rejection ≠ zero observable effects
+gate rejection = zero target mutation
+```
+
+The gate enforces declared requirements. It does not invent them. CAS/version comparison is one check class, not the universal meaning of a gate.
+
+## Trusted mutation footprint
+
+```text
+MutationFootprint =
+  Exact(Set<StateKey>)
+  | Prefix(StateKeyPrefix)
+  | DomainWide(D)
+  | Unknown(D)
+```
+
+The footprint is authenticated, bound to the concrete implementation, and must over-approximate real writes:
+
+```text
+ActualWrites(op,args) subset DeclaredMutationFootprint(op,args)
+```
+
+Writes outside the footprint fail before the effect when runtime-mediated, or an equivalent trusted deployment guarantee must exist.
+
+After an act, current-state facts intersecting the footprint are invalidated conservatively. Historical observations and attestations remain.
+
+## Result obligations deferred to Item 3
+
+Phase B declares the operation-level guarantees. The CFG/error model must still represent:
+
+```text
+RESULT-LATENT-POSTCOND
+ACT-SETTLEMENT-OUTCOME
+ACT-PARTIAL-COMPLETION
+```
+
+In particular, a generic `Err` must not imply that no effect occurred when delivery or settlement is ambiguous.

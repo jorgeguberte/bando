@@ -1,0 +1,79 @@
+---
+title: Phase D — soma.converge lowering (design freeze)
+description: Candidate v2.3 frozen 2026-08-26: transactional settlement, trust registry, recovery matrix and normative principles. Design-level evidence; executable falsification pending.
+---
+
+import { Callout } from 'nextra/components'
+
+Source checkpoint: wiki `4a66862` (2026-08-26).
+
+Status: **RESOLVED FOR CURRENT PHASE** — design freeze of the Phase D lowering candidate v2.3.
+
+Evidence level:
+
+```text
+DESIGN-LEVEL
+ADVERSARIALLY REVIEWED
+NOT EXECUTABLE-VERIFIED
+NOT SOUNDNESS-PROVED
+```
+
+<Callout type="warn" title="Design freeze, not implementation">
+Phase D is closed at the design level only. The next modality is executable falsification: a state-machine harness under fault injection must attempt to kill the lowering before Item 3 opens.
+</Callout>
+
+## Genealogy
+
+```text
+Candidate v1    → replica: 7 blockers (D1–D7)
+Candidate v2    → resolves D1–D7 at instruction-protocol level
+                → replica: D0 residual macros, D1c missing tx contract,
+                  D1d recovery needs frame state, not just handle state
+Candidate v2.1  → idempotent & crash-safe settlement
+                → replica: durable CompletionRecord; Settled != Applied;
+                  crash atomicity of semantic apply; weak (handle_id, receipt_id) key
+Candidate v2.2  → Trust Registry for attestation emitters; non-forgeable/TCB-only
+                  attestations; soma_verify requires authority over verifier effects;
+                  soma_act coupled to Operation; internalize rejects negative results
+                → replica: D1b transactional domain contract, D6/D7 recovery lineage
+Candidate v2.3  — FINAL: closes D1b.1–D1b.3, fixes soma.vm.tx.* contract,
+                  recovery matrix by frame state, removes residual macros,
+                  connects recovery facts to lineage
+```
+
+## Frozen normative principles
+
+- **`delivery != settlement != semantic incorporation`** — adapter delivery, ledger reconciliation and search-graph advancement have orthogonal lifecycles.
+- **`SemanticGenerationValid != SettlementBindingValid`** — generation expiry blocks search-graph mutation but never discharges real-world spend reconciliation.
+- **`semantic staleness does not erase settlement obligations`**
+- **`BudgetScope accounting != IntentFrame ownership`** — the BudgetScope bounds the local search; ownership and conservation belong to the IntentFrame exclusively.
+- **`StageLocal != semantic dispatch`** — reserving resources and writing the outbox consumes no fuel and records no visited nodes.
+- **`transport retry != new semantic attempt`** — re-emissions of the same `request_id` preserve search counters and visitation metrics.
+- **`visited = actual expansion history != successor dedup set`** — nodes enter visitation history only on real dispatch expansion; the same VisitKey may legitimately appear multiple times.
+
+## What v2.3 fixed
+
+| Area | Outcome |
+|---|---|
+| D1b transactional domain | `soma.vm.tx.*` contract fixed; crash-before-commit vs durable-commit visibility |
+| Settlement | idempotent, exactly-once reconciliation keyed durably; `Settled` does not imply `Applied` |
+| Recovery | forward recovery by frame state; ambiguity never becomes success, refund or zero cost |
+| Residual macros (D0) | eliminated from the lowered dialect |
+| Lineage/recovery facts | connected to static lineage obligations (D6/D7) |
+
+## Next: executable falsification
+
+The agreed plan (three commits, spec SHA immutable during campaign):
+
+```text
+Commit 1  docs: close SOMA-IR item 2 phase D          ← this freeze
+Commit 2  test: add converge lowering harness + invariant kills
+Commit 3  test: add phase D adversarial crash scenarios
+
+failure classification before any spec change:
+    HARNESS_BUG | LOWERING_COUNTEREXAMPLE | CONVERGEFRAME_COUNTEREXAMPLE
+```
+
+Campaign matrix: 13 adversarial scenarios (`T01–T11`, including `T04A/B` retry split and `T07B` equivocation-crash) against invariants I1–I10, each invariant carrying its own kill test. Differential testing (semantic × lowered) is a second campaign, after the first passes.
+
+Validation code lives in a separate repository and is intentionally excluded from this site's normative docs.

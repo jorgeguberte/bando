@@ -1,0 +1,83 @@
+---
+title: Item 3 — CFG / Result / Error Model
+description: Formal specification of Result refinement, latent postconditions, settlement-aware outcomes, partial completion, and handle effect joins in SOMA-IR v0.
+---
+
+import { Callout } from 'nextra/components'
+
+Source checkpoint: wiki `9f0abb6` (2026-08-26).
+
+Status: **RESOLVED FOR CURRENT PHASE** — integrated closure of SOMA-IR Item 3.
+
+Evidence level:
+
+```text
+DESIGN-LEVEL
+ADVERSARIALLY REVIEWED
+EXECUTABLE-VERIFIED IN HARNESS (81/81 Phase D tests, 21/21 Item 3 golden scenarios, 15/15 mutation kills)
+NOT SOUNDNESS-PROVED
+ACTUAL COMPILER/LOWERING NOT YET VERIFIED
+```
+
+<Callout type="info" title="Central Thesis of Item 3">
+`Result` is not just an error-handling container: in SOMA, it represents the boundary between possible runtime events and knowledge the CFG is authorized to assume. "Failed", "might have happened" and "partially happened" are epistemologically distinct states that must never collapse into the same `Err`.
+</Callout>
+
+---
+
+## 1. Track A — `RESULT-LATENT-POSTCOND`
+
+```text
+Result<T, E>
+
+LatentPostconditions<T, E> {
+    on_ok(value: T)   -> FactSet
+    on_err(error: E)  -> FactSet
+}
+```
+
+- **Latent Boundary**: Postconditions declared in `on_ok` or `on_err` remain latent on SSA definitions and **never enter path facts $\Psi$ before refinement**.
+- **CFG Refinement (`switch_result`)**: Branching on `IsOk(%r)` or `IsErr(%r)` instantiates postconditions bound directly to the block argument SSA symbol of the destination block.
+- **Strict Must-Fact Merge**: At CFG join points:
+  $$\Psi_{\text{merge}} = \bigcap_{\text{pred}_i} \text{rename}(\Psi_{\text{pred}_i})$$
+  Branch-exclusive facts are discarded on merge; common must-facts are preserved after renaming.
+- **Loop Fixed-Point**: Facts from iteration $k$ are governed by fixed-point analysis and cannot leak into loop headers or future iterations without proof.
+
+---
+
+## 2. Track B — `ACT-SETTLEMENT-OUTCOME`
+
+- **Disjoint Ambiguity**: Physical ambiguity (`DeliveryUnknown`, `SettlementUnknown`) **never collapses into `Result::Err`**.
+- **Outcome Algebra**:
+  $$\text{ActOutcome}\langle T, E \rangle = \text{Success}(T) \mid \text{Failure}(E) \mid \text{PartialCompletion}(\text{Report}) \mid \text{Unknown}$$
+- **Await Suspension**: `await ChildHandle` suspends while the child's settlement is unknown; it does not fabricate an eager `Err`.
+- **Confirmed Failure**: Definite failure (`ConfirmedNotDelivered`) becomes clean `Err` only when physically confirmed by the runtime.
+
+---
+
+## 3. Track C — `ACT-PARTIAL-COMPLETION`
+
+- **Explicit Footprint**: When a multi-step action fails partially on a non-transactional adapter, it yields `PartialCompletion(PartialEffectReport)` carrying confirmed applied/unapplied footprints.
+- **Transactional Contract Enforcement**: If an operation is declared atomic/transactional (`is_atomic=True`), emitting a partial completion is a fatal protocol violation (`FatalProtocolViolation`).
+- **Fact Soundness**: Success-only postconditions do not materialize in the partial completion branch.
+
+---
+
+## 4. Track D — `HANDLE-EFFECT-JOIN`
+
+- **May-Effect Union**: Merging compatible handles ($\text{ChildHandle}\langle T, E, \Sigma_a \rangle$ and $\text{ChildHandle}\langle T, E, \Sigma_b \rangle$) produces:
+  $$\text{ChildHandle}\langle T, E, \Sigma_a \cup \Sigma_b \rangle$$
+- **Type Mismatch Rejection**: Merges of handles with incompatible payload types without explicit coercion are rejected.
+- **Await Neutrality**: $\Sigma_{\text{await}} = \emptyset$. Awaiting a handle adds zero observable effects to the parent trace.
+- **Provenance / Effect Separation**: The concrete result lineage reflects only the child actually executed, not the handle's may-effects union.
+
+---
+
+## 5. Verification Matrix
+
+| Obligation | Status | Executable Harness Suite |
+|---|---|---|
+| `RESULT-LATENT-POSTCOND` | **RESOLVED** | R01–R07, K1–K4, D_R01, D_R02 |
+| `ACT-SETTLEMENT-OUTCOME` | **RESOLVED** | R08–R09, K5, D_R08 |
+| `ACT-PARTIAL-COMPLETION` | **RESOLVED** | R10–R12, K6–K8, D_R10, D_R11 |
+| `HANDLE-EFFECT-JOIN` | **RESOLVED** | R13–R18, K9–K11, D_R14, D_X3_X4 |
